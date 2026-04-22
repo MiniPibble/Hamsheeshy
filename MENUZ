@@ -1,0 +1,173 @@
+-- SERVICES
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+
+-- ANTI-TAMPER CONFIGURATION
+-- Attempts to hide the UI in gethui (executor standard) to bypass game-side detection
+local SecureParent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or CoreGui
+local PROTECTED_NAME = "\0" .. "MiniPibble_Secure_Loader" -- Null-byte prefix to hide from simple scanners
+
+-- CLEANUP PREVIOUS INSTANCES
+if SecureParent:FindFirstChild(PROTECTED_NAME) then 
+    SecureParent[PROTECTED_NAME]:Destroy() 
+end
+
+-- UI SETUP
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = PROTECTED_NAME
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 999999
+ScreenGui.Parent = SecureParent
+
+-- MAIN CONTAINER (CanvasGroup for smooth global fade)
+local Main = Instance.new("CanvasGroup")
+Main.Name = "Main"
+Main.Size = UDim2.new(0, 280, 0, 320)
+Main.Position = UDim2.new(0.5, -140, 0.5, -160)
+Main.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+Main.BorderSizePixel = 0
+Main.Parent = ScreenGui
+
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 20)
+Corner.Parent = Main
+
+local Stroke = Instance.new("UIStroke")
+Stroke.Thickness = 2
+Stroke.Color = Color3.fromRGB(180, 0, 0)
+Stroke.Transparency = 0.5
+Stroke.Parent = Main
+
+-- PROFILE IMAGE
+local Profile = Instance.new("ImageLabel")
+Profile.Name = "ProfileImage"
+Profile.Size = UDim2.new(0, 80, 0, 80)
+Profile.Position = UDim2.new(0.5, -40, 0, 20)
+Profile.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Profile.Image = "rbxassetid://138414118519297" -- Your requested asset
+Profile.BorderSizePixel = 0
+Profile.Parent = Main
+
+Instance.new("UICorner", Profile).CornerRadius = UDim.new(1, 0)
+local PStroke = Instance.new("UIStroke")
+PStroke.Thickness = 3
+PStroke.Color = Color3.fromRGB(200, 0, 0)
+PStroke.Parent = Profile
+
+-- TEXT ELEMENTS
+local Title = Instance.new("TextLabel")
+Title.Text = "MiniPibbleOfficial"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Position = UDim2.new(0, 0, 0, 110)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.FredokaOne
+Title.TextSize = 22
+Title.BackgroundTransparency = 1
+Title.Parent = Main
+
+local User = Instance.new("TextLabel")
+User.Text = "@MiniPibbleOfficial"
+User.Size = UDim2.new(1, 0, 0, 20)
+User.Position = UDim2.new(0, 0, 0, 135)
+User.TextColor3 = Color3.fromRGB(140, 140, 140)
+User.Font = Enum.Font.Gotham
+User.TextSize = 13
+User.BackgroundTransparency = 1
+User.Parent = Main
+
+local Status = Instance.new("TextLabel")
+Status.Text = "Initializing secure environment..."
+Status.Size = UDim2.new(1, 0, 0, 20)
+Status.Position = UDim2.new(0, 0, 0, 190)
+Status.TextColor3 = Color3.fromRGB(180, 180, 180)
+Status.Font = Enum.Font.GothamMedium
+Status.TextSize = 12
+Status.BackgroundTransparency = 1
+Status.Parent = Main
+
+-- PROGRESS BAR
+local BarBg = Instance.new("Frame")
+BarBg.Size = UDim2.new(0.8, 0, 0, 5)
+BarBg.Position = UDim2.new(0.1, 0, 0, 220)
+BarBg.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+BarBg.BorderSizePixel = 0
+BarBg.Parent = Main
+
+local Fill = Instance.new("Frame")
+Fill.Size = UDim2.new(0, 0, 1, 0)
+Fill.BackgroundColor3 = Color3.fromRGB(220, 0, 0)
+Fill.BorderSizePixel = 0
+Fill.Parent = BarBg
+
+-- LABELS
+local TimerLabel = Instance.new("TextLabel")
+TimerLabel.Text = "00:00"
+TimerLabel.Size = UDim2.new(0.4, 0, 0, 20)
+TimerLabel.Position = UDim2.new(0.1, 0, 0, 230)
+TimerLabel.TextColor3 = Color3.fromRGB(200, 40, 40)
+TimerLabel.Font = Enum.Font.GothamBold
+TimerLabel.TextSize = 12
+TimerLabel.TextXAlignment = Enum.TextXAlignment.Left
+TimerLabel.BackgroundTransparency = 1
+TimerLabel.Parent = Main
+
+local PercentLabel = Instance.new("TextLabel")
+PercentLabel.Text = "0%"
+PercentLabel.Size = UDim2.new(0.4, 0, 0, 20)
+PercentLabel.Position = UDim2.new(0.5, 0, 0, 230)
+PercentLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+PercentLabel.Font = Enum.Font.GothamBold
+PercentLabel.TextSize = 12
+PercentLabel.TextXAlignment = Enum.TextXAlignment.Right
+PercentLabel.BackgroundTransparency = 1
+PercentLabel.Parent = Main
+
+-- LOGIC & ANTI-TAMPER PERSISTENCE
+local StartTime = tick()
+local LoadingDuration = 90 -- 1 Minute 30 Seconds
+local IsFinished = false
+local Connection
+
+Connection = RunService.RenderStepped:Connect(function()
+    -- BYPASS: Ensure UI stays in protected storage
+    if ScreenGui.Parent ~= SecureParent then
+        ScreenGui.Parent = SecureParent
+    end
+
+    local Elapsed = tick() - StartTime
+    local Progress = math.clamp(Elapsed / LoadingDuration, 0, 1)
+
+    -- Update Bar and Text
+    Fill.Size = UDim2.new(Progress, 0, 1, 0)
+    PercentLabel.Text = math.floor(Progress * 100) .. "%"
+    TimerLabel.Text = string.format("%02d:%02d", math.floor(Elapsed/60), math.floor(Elapsed%60))
+
+    -- Status Update Logic
+    if Progress < 0.25 then
+        Status.Text = "Fetching encrypted patches..."
+    elseif Progress < 0.50 then
+        Status.Text = "Bypassing anti-cheat signatures..."
+    elseif Progress < 0.75 then
+        Status.Text = "Injecting secure modules..."
+    elseif Progress < 1 then
+        Status.Text = "Finalizing environment..."
+    end
+
+    -- Completion Logic
+    if Progress >= 1 and not IsFinished then
+        IsFinished = true
+        Status.Text = "Bypass Successful!"
+        
+        -- SMOOTH DISAPPEAR
+        local Fade = TweenService:Create(Main, TweenInfo.new(1.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {GroupTransparency = 1})
+        Fade:Play()
+        
+        Fade.Completed:Connect(function()
+            Connection:Disconnect()
+            ScreenGui:Destroy()
+        end)
+    end
+end)
